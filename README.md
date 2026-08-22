@@ -8,7 +8,7 @@ This tool builds a normal range out of **your own child's history** and shows yo
 
 I built it because I couldn't stop computing, and it turned out that most nights the answer was that nothing was wrong. [Why I built this →](#why-i-built-this)
 
-**[Open the tool →](https://YOUR-USERNAME.github.io/infant-sleep-predictor/)**
+**[Open the tool →](https://alicezheng-ai.github.io/infant-sleep-predictor/)**
 
 Everything runs in your browser. Nothing is uploaded, nothing is stored, and no server sees your data.
 
