@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Infant Sleep Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light dark;
+  /* light — soft sky over paper */
+  --bg:#F3F8FD; --surface:#FFFFFF; --surface2:#E6F1FB;
+  --band:#BFDCF4; --line:#D6E6F4;
+  --text:#16304E; --muted:#5A7896; --dim:#8FA9C2;
+  --calm:#2F8FCE; --note:#B5810E; --far:#C85C36;
+  --shadow:0 1px 2px rgba(22,48,78,.05), 0 6px 20px rgba(22,48,78,.06);
+  --dotring:#FFFFFF;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    /* dark — midnight nursery */
+    --bg:#0D1626; --surface:#152337; --surface2:#1C2E47;
+    --band:#2A4162; --line:#26374F;
+    --text:#E7F1FB; --muted:#8BA5C3; --dim:#657F9E;
+    --calm:#8FC9F2; --note:#F0C572; --far:#EE8F6E;
+    --shadow:none;
+    --dotring:#0D1626;
+  }
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:15px; line-height:1.5;
+  padding:24px 16px 64px; max-width:660px; margin:0 auto;
+}
+h1{
+  font-family:'Fraunces',Georgia,serif; font-weight:300;
+  font-size:clamp(29px,7.5vw,40px); line-height:1.08; letter-spacing:-.015em;
+  margin-bottom:7px;
+}
+.sub{color:var(--muted); font-size:13.5px; margin-bottom:24px}
+
+.drop{
+  display:block; background:var(--surface2);
+  border:1px dashed var(--band); border-radius:12px; padding:17px;
+  text-align:center; color:var(--muted); font-size:13.5px; margin-bottom:26px;
+  cursor:pointer; transition:border-color .15s, color .15s, background .15s;
+}
+.drop:hover,.drop:focus-visible{border-color:var(--calm); color:var(--text)}
+.drop:focus-visible{outline:2px solid var(--calm); outline-offset:2px}
+input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
+
+.night{
+  background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow);
+  border-radius:14px; padding:19px 19px 17px; margin-bottom:30px;
+}
+.night .lbl{font-size:10.5px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--dim); margin-bottom:11px}
+.night .big{font-family:'Fraunces',Georgia,serif; font-weight:300; font-size:42px; line-height:1}
+.night .big span{font-size:19px; color:var(--muted); margin-left:7px}
+.night .verdict{margin-top:11px; font-size:14px; color:var(--calm)}
+.night .verdict.note{color:var(--note)}
+
+.metric{margin-bottom:28px}
+.mhead{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px}
+.mname{font-size:14.5px; font-weight:500}
+.mval{font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:500}
+.mval.inr{color:var(--calm)} .mval.out{color:var(--note)} .mval.far{color:var(--far)}
+.mnote{font-size:12.5px; color:var(--muted); margin-bottom:12px}
+
+.strip{position:relative; height:34px}
+.rail{position:absolute; top:15px; left:0; right:0; height:3px;
+  background:var(--surface2); border-radius:2px}
+.range{position:absolute; top:12px; height:9px; background:var(--band); border-radius:5px}
+.mid{position:absolute; top:9px; width:1px; height:15px; background:var(--dim)}
+.dot{position:absolute; top:9px; width:15px; height:15px; border-radius:50%; margin-left:-7.5px;
+  border:2.5px solid var(--dotring); box-shadow:0 0 0 1.5px currentColor}
+.dot.inr{background:var(--calm); color:var(--calm)}
+.dot.out{background:var(--note); color:var(--note)}
+.dot.far{background:var(--far); color:var(--far)}
+.ends{display:flex; justify-content:space-between;
+  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); margin-top:1px}
+
+
+.defs{border-top:1px solid var(--line); margin-top:36px; padding-top:19px;
+  font-size:12.5px; color:var(--muted); line-height:1.65}
+.defs h2{font-family:'Fraunces',Georgia,serif; font-weight:300; font-size:19px;
+  color:var(--text); margin-bottom:9px}
+.defs code{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text)}
+.defs strong{color:var(--text); font-weight:500}
+.defs p{margin-bottom:9px}
+.guide{background:var(--surface2); border-radius:14px; padding:18px 19px; margin-bottom:30px}
+.guide .lbl{font-size:10.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--dim); margin-bottom:10px}
+.guide p{font-size:13.5px; line-height:1.6; color:var(--text)}
+.guide p+p{margin-top:10px}
+.guide strong{font-weight:500; color:var(--calm)}
+.guide .esc{margin-top:12px; padding-top:12px; border-top:1px solid var(--band); color:var(--far)}
+.drift{margin-top:11px; font-size:12.5px; color:var(--muted); line-height:1.55}
+.prov{margin-top:10px;font-size:12.5px;color:var(--note)}
+.err{color:var(--far); font-size:13.5px; margin-bottom:18px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<h1>Is this normal for your baby?</h1>
+<p class="sub">Tracker apps tell you what changed since yesterday. This tells you whether it is inside your baby's own range.</p>
+
+<label class="drop" tabindex="0" id="drop">
+  Tap to load your tracker's CSV export
+  <input type="file" id="file" accept=".csv,text/csv">
+</label>
+
+<div id="err"></div>
+<div id="out"></div>
+
+<div class="defs">
+  <h2>How these are counted</h2>
+  <p>Everything here is computed from your own child's history — nothing is compared to a population average. A <strong>night</strong> is every sleep starting between 18:00 and 08:00, grouped under the date it began the evening on. <strong>Day sleep</strong> is every sleep starting between 06:00 and 18:00. The <strong>anchor</strong> is the longest single block of a night.</p>
+  <p>The band is the middle 80% of the last 21 nights — the normal range. The thin line is the median. The dot is the most recent night. Feed metrics use only the last 16 days, since logging habits drift.</p>
+  <p>Your tracker app uses different day boundaries, so its totals will not match these. Neither is wrong; they answer different questions.<br><br>This is a descriptive tool, not medical advice. It describes what is usual for one child and cannot tell you whether that is healthy. Growth, feeding adequacy, and anything that worries you belong with your pediatrician.</p>
+</div>
+
+<script>
+
+function parseCSV(t){
+  const rows=[]; let f='',row=[],q=false;
+  for(let i=0;i<t.length;i++){
+    const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(f); f=''; }
+    else if(c==='\n'){ row.push(f); rows.push(row); row=[]; f=''; }
+    else if(c!=='\r') f+=c;
+  }
+  if(f.length||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+
+const pd = s => { const m=String(s).trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/); 
+  return m? new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]) : null; };
+const dkey = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const hm = m => Math.floor(m/60)+'h'+String(Math.round(m%60)).padStart(2,'0')+'m';
+const q = (a,p) => { const s=[...a].sort((x,y)=>x-y); const i=(s.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
+  return s[lo]+(s[hi]-s[lo])*(i-lo); };
+
+function build(rows){
+  const H=rows[0], ix=n=>H.indexOf(n);
+  const cT=ix('Type'), cS=ix('Start Date/time'), cE=ix('[Sleep] End Date/time'),
+        cD=ix('[Sleep] Duration (Seconds)'), cDp=ix('[Diaper] Type'),
+        cBL=ix('[Breastfeed] Left Duration (Seconds)'), cBR=ix('[Breastfeed] Right Duration (Seconds)');
+  if(cT<0||cS<0) throw new Error('This file is missing a Type or Start Date/time column, so it cannot be read.');
+
+  const sleeps=[], feeds=[], wets=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r[cS]) continue; const t=pd(r[cS]); if(!t) continue;
+    if(r[cT]==='Sleep'){ const d=parseFloat(r[cD])/60; if(d>0) sleeps.push({t,d}); }
+    else if(r[cT]==='Breastfeed'||r[cT]==='Bottle Feed'){
+      const l=parseFloat(r[cBL])||0, rr=parseFloat(r[cBR])||0; feeds.push({t,d:(l+rr)/60}); }
+    else if(r[cT]==='Diaper' && /Wet/i.test(r[cDp]||'')) wets.push({t});
+  }
+  if(!sleeps.length) throw new Error('No sleep records found in this file.');
+  sleeps.sort((a,b)=>a.t-b.t);
+
+  const nights={}, days={};
+  for(const s of sleeps){
+    const h=s.t.getHours();
+    if(h>=18||h<8){ const k=dkey(new Date(s.t-12*3600e3)); (nights[k]=nights[k]||[]).push(s); }
+    if(h>=6&&h<18){ const k=dkey(s.t); (days[k]=days[k]||[]).push(s); }
+  }
+  const cnt=(arr,k,lo,hi)=>arr.filter(x=>{const h=x.t.getHours();
+    return dkey(h<lo? new Date(x.t-12*3600e3):x.t)===k;}).length;
+
+  const rec=Object.keys(nights).sort().map(k=>{
+    const ns=nights[k], ds=days[k]||[];
+    const tot=ns.reduce((a,b)=>a+b.d,0), anch=Math.max(...ns.map(x=>x.d));
+    const dayTot=ds.reduce((a,b)=>a+b.d,0);
+    const fd=feeds.filter(f=>dkey(f.t)===k), wd=wets.filter(w=>dkey(w.t)===k);
+    return {k, tot, anch, wakes:ns.length-1, dayTot, naps:ds.length,
+            feeds:fd.length, feedMin:fd.reduce((a,b)=>a+b.d,0), wet:wd.length};
+  }).filter(r=>r.tot>120);
+
+  const EX=['2026-08-14','2026-08-15'];
+  const last=rec[rec.length-1];
+  const hist=rec.slice(0,-1).filter(r=>!EX.includes(r.k)).slice(-21);
+  if(hist.length<5) throw new Error('Only '+hist.length+' complete night'+(hist.length===1?'':'s')+' found. This needs at least 5 to show anything useful, and 10 before the range means much.');
+  return {last, hist};
+}
+
+function strip(name, note, val, arr, fmt, opt){
+  opt=opt||{}; const floor=opt.floor||0;
+  const lo=q(arr,.10), hi=q(arr,.90), mid=q(arr,.50);
+  const min=Math.min(lo,val), max=Math.max(hi,val);
+  const pad=(max-min)*0.14||1, a=min-pad, b=max+pad, P=v=>((v-a)/(b-a))*100;
+  let cls='inr', verdict='inside the usual range';
+  if(val<lo||val>hi){ cls='out'; verdict = val>hi? 'above the usual range':'below the usual range'; }
+  const span=hi-lo, m=Math.max(span*0.5, floor);
+  if(val>hi+m || val<lo-m){ cls='far'; verdict=(val>hi?'well above':'well below')+' the usual range'; }
+
+  return `<div class="metric">
+    <div class="mhead"><span class="mname">${name}</span><span class="mval ${cls}">${fmt(val)}</span></div>
+    <div class="mnote">${note} — ${verdict}.</div>
+    <div class="strip">
+      <div class="rail"></div>
+      <div class="range" style="left:${P(lo)}%;width:${P(hi)-P(lo)}%"></div>
+      <div class="mid" style="left:${P(mid)}%"></div>
+      <div class="dot ${cls}" style="left:${P(val)}%"></div>
+    </div>
+    <div class="ends"><span>${fmt(lo)}</span><span>${fmt(hi)}</span></div>
+    </div>`;
+}
+
+// Which recent nights fall outside the band, and how long the current streak is.
+function streak(hist, last, key, lo, hi){
+  const seq=[...hist.slice(-6), last].map(r=>r[key]);
+  let run=0;
+  for(let i=seq.length-1;i>=0;i--){ if(seq[i]<lo||seq[i]>hi) run++; else break; }
+  const outOf7=seq.filter(v=>v<lo||v>hi).length;
+  return {run, outOf7, of:seq.length};
+}
+
+function guidance(last, hist, H, F, hm, cv){
+  const FEED=['feeds','feedMin'];
+  const src=k=>FEED.includes(k)?F(k):H(k);
+  const band=k=>[q(src(k),.10), q(src(k),.90)];
+  const flags=[];
+  for(const [k,label,fmt] of [['tot','night sleep total',hm],['wakes','night wakes',String],
+       ['anch','longest block',hm],['dayTot','day sleep',hm],['naps','nap count',String],
+       ['feeds','feed count',String],['feedMin','nursing minutes',hm],['wet','wet diapers',String]]){
+    const [lo,hi]=band(k); const v=last[k];
+    if(v>=lo&&v<=hi) continue;
+    const st=streak(hist,last,k,lo,hi);
+    flags.push({k,label,dir:v>hi?'above':'below',st,weight:(1/(cv[k]||0.2))*(1+st.run)});
+  }
+  let body='';
+  if(!flags.length){
+    body=`<p>Everything is inside your baby's usual range. Nothing here needs a change.</p>`;
+  } else {
+    flags.sort((a,b)=>b.weight-a.weight);
+    const f=flags[0];
+    const noise = f.st.run<=1;
+    body = noise
+      ? `<p><strong>Probably just one night.</strong> ${f.label[0].toUpperCase()+f.label.slice(1)} came in ${f.dir} the usual range, but it was inside range the night before. Single nights swing a lot at this age and rarely mean anything on their own. Worth another look tomorrow, not a change tonight.</p>`
+      : `<p><strong>${f.st.run} nights running.</strong> ${f.label[0].toUpperCase()+f.label.slice(1)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
+    if(flags.length>1)
+      body+=`<p>${flags.length-1} other measure${flags.length>2?'s are':' is'} outside range too. ${f.label[0].toUpperCase()+f.label.slice(1)} is the one to watch, because it moves least from night to night — the same size of change means more there than in the others.</p>`;
+  }
+  // the one escalation this data supports
+  // Require a real gap, not a hairline, before saying anything medical.
+  const [wlo,whi]=band('wet'), [flo,fhi]=band('feedMin');
+  if(last.wet <= wlo-1 && last.feedMin < flo-Math.max((fhi-flo)*0.15, 8))
+    body+=`<p class="esc">Wet diapers and feeding are both below range on the same day. That combination is the one worth calling your pediatrician about rather than watching.</p>`;
+  return `<div class="guide"><div class="lbl">What to make of this</div>${body}</div>`;
+}
+
+function render(d){
+  const {last,hist}=d, num=v=>String(Math.round(v));
+  // R3: breastfeed timing convention changed 2026-08-06. Feed metrics are not
+  // comparable across that date, so their range is built only from nights after it.
+  const cut=new Date(new Date(last.k)-16*864e5).toISOString().slice(0,10);
+  const fh=hist.filter(r=>r.k>=cut);
+  const F=k=>(fh.length>=6?fh:hist).map(r=>r[k]);
+  const fnote=fh.length>=6?'':' (short history — range may span a change in how you log)';
+  const lo=q(hist.map(r=>r.tot),.10), hi=q(hist.map(r=>r.tot),.90);
+  const ok = last.tot>=lo && last.tot<=hi;
+  const H=k=>hist.map(r=>r[k]);
+  const cvOf=k=>{const a=H(k),m=a.reduce((x,y)=>x+y,0)/a.length;
+    return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/a.length)/(m||1);};
+  const cv={}; for(const k of ['tot','wakes','anch','dayTot','naps','feeds','feedMin','wet']) cv[k]=cvOf(k);
+  // Is the baseline itself moving? At this age three weeks is real development,
+  // so "inside his range" can mean "inside the range he had two weeks ago".
+  const rec=hist.slice(-7).map(r=>r.tot), old=hist.slice(-21,-7).map(r=>r.tot);
+  let drift='';
+  if(old.length>=7){
+    const dm=q(rec,.5)-q(old,.5);
+    if(Math.abs(dm)>=20) drift=`<div class="drift">His baseline is moving: night sleep over the last 7 nights runs ${dm>0?'about '+Math.round(dm)+' min longer':'about '+Math.round(-dm)+' min shorter'} than the two weeks before. The range below blends both, so it lags a little behind where he is now.</div>`;
+  }
+
+  return `<div class="night">
+      <div class="lbl">Night of ${last.k} · ${hist.length} nights compared</div>
+      <div class="big">${hm(last.tot)}<span>slept</span></div>
+      <div class="verdict${ok?'':' note'}">${ok?'A normal night for your baby.':(last.tot>hi?'Longer than usual for your baby.':'Shorter than usual for your baby.')} The usual range is ${hm(lo)}–${hm(hi)}.</div>
+      ${hist.length<10?`<div class="prov">Still learning — ${hist.length} of 10 nights. Treat every range below as provisional.</div>`:''}
+      ${drift}
+    </div>`
+  + guidance(last, hist, H, F, hm, cv)
+  + strip('Night sleep total','Usually the steadiest number — it moves less than anything else',last.tot,H('tot'),hm,{floor:25})
+  + strip('Longest block (anchor)','The one that feels biggest and varies most',last.anch,H('anch'),hm,{floor:35})
+  + strip('Night wakes','Times they surfaced after the longest block',last.wakes,H('wakes'),num,{floor:2})
+  + strip('Day sleep total','Depends heavily on whether naps were assisted or independent',last.dayTot,H('dayTot'),hm,{floor:45})
+  + strip('Naps','Count of daytime sleeps',last.naps,H('naps'),num,{floor:2})
+  + strip('Feeds','Sessions, not volume'+fnote,last.feeds,F('feeds'),num,{floor:3})
+  + strip('Nursing minutes','Whatever your feed timer actually measures'+fnote,last.feedMin,F('feedMin'),hm,{floor:15})
+  + strip('Wet diapers','The best intake proxy between weigh-ins',last.wet,H('wet'),num,{floor:2});
+}
+
+const el=id=>document.getElementById(id);
+el('drop').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();el('file').click();} });
+el('file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ el('err').innerHTML=''; 
+    try{ el('out').innerHTML=render(build(parseCSV(rd.result))); }
+    catch(x){ el('out').innerHTML=''; el('err').innerHTML='<p class="err">'+x.message+'</p>'; } };
+  rd.onerror=()=>{ el('err').innerHTML='<p class="err">Could not read that file.</p>'; };
+  rd.readAsText(f);
+});
+</script>
+</body>
+</html>
