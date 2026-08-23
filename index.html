@@ -214,14 +214,26 @@ function strip(name, note, val, arr, fmt, opt){
     </div>`;
 }
 
-// Which recent nights fall outside the band, and how long the current streak is.
+// Which recent nights fall outside the band on the SAME side as tonight, and
+// how long that signed run is. An above-band night does not extend a below-band
+// run: it ends it.
 function streak(hist, last, key, lo, hi){
-  const seq=[...hist.slice(-6), last].map(r=>r[key]);
-  let run=0;
-  for(let i=seq.length-1;i>=0;i--){ if(seq[i]<lo||seq[i]>hi) run++; else break; }
-  const outOf7=seq.filter(v=>v<lo||v>hi).length;
-  return {run, outOf7, of:seq.length};
+  const sign = v => v < lo ? -1 : v > hi ? 1 : 0;
+  const seq = [...hist.slice(-6), last].map(r => r[key]);
+  const dir = sign(seq[seq.length-1]);
+  let run = 0;
+  if(dir !== 0){
+    for(let i=seq.length-1; i>=0; i--){ if(sign(seq[i]) === dir) run++; else break; }
+  }
+  const outOf7 = seq.filter(v => sign(v) === dir).length;
+  return {run, outOf7, of:seq.length, dir};
 }
+
+const cap = s => s[0].toUpperCase() + s.slice(1);
+
+// Above this CV a measure can report its value and direction but must not claim
+// a pattern or open the causal menu. anch runs 0.167 here against 0.056 for tot.
+const CV_CEILING = 0.12;
 
 function guidance(last, hist, H, F, hm, cv){
   const FEED=['feeds','feedMin'];
@@ -242,12 +254,21 @@ function guidance(last, hist, H, F, hm, cv){
   } else {
     flags.sort((a,b)=>b.weight-a.weight);
     const f=flags[0];
-    const noise = f.st.run<=1;
-    body = noise
-      ? `<p><strong>Probably just one night.</strong> ${f.label[0].toUpperCase()+f.label.slice(1)} came in ${f.dir} the usual range, but it was inside range the night before. Single nights swing a lot at this age and rarely mean anything on their own. Worth another look tomorrow, not a change tonight.</p>`
-      : `<p><strong>${f.st.run} nights running.</strong> ${f.label[0].toUpperCase()+f.label.slice(1)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
-    if(flags.length>1)
-      body+=`<p>${flags.length-1} other measure${flags.length>2?'s are':' is'} outside range too. ${f.label[0].toUpperCase()+f.label.slice(1)} is the one to watch, because it moves least from night to night — the same size of change means more there than in the others.</p>`;
+    const pct=k=>Math.round((cv[k]||0.2)*100);
+    if(f.st.run<=1){
+      body=`<p><strong>Probably just one night.</strong> ${cap(f.label)} came in ${f.dir} the usual range, but it was not ${f.dir} range the night before. Single nights swing a lot at this age and rarely mean anything on their own. Worth another look tomorrow, not a change tonight.</p>`;
+    } else if((cv[f.k]||0.2) > CV_CEILING){
+      body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). This measure moves ${pct(f.k)}% from night to night on its own, so a short run of it is weak evidence. Watch the steadier numbers before changing anything.</p>`;
+    } else {
+      body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
+    }
+    if(flags.length>1){
+      const watch=[...flags].sort((a,b)=>(cv[a.k]||1)-(cv[b.k]||1))[0];
+      const others=flags.length-1, verb=flags.length>2?'s are':' is';
+      body += watch.k===f.k
+        ? `<p>${others} other measure${verb} outside range too. ${cap(f.label)} is still the one to watch: at ${pct(f.k)}% night-to-night it varies least of the ones flagged, so the same size of change means more there.</p>`
+        : `<p>${others} other measure${verb} outside range too. ${cap(watch.label)} is the one to watch, not ${f.label} — it varies ${pct(watch.k)}% from night to night against ${pct(f.k)}%, so the same size of change means more there.</p>`;
+    }
   }
   // the one escalation this data supports
   // Require a real gap, not a hairline, before saying anything medical.
