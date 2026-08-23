@@ -251,6 +251,7 @@ const CV_CEILING = 0.12;
 // comparable across the switch, so the band is rebuilt from the new regime only.
 const REGIME={wet:'2026-08-21'};
 const REGIME_WHY={wet:'the overnight diaper changed on 2026-08-21, so this count now measures changes rather than voids'};
+const LABELS={wet:'wet diapers'};
 const MIN_REGIME_N=7;
 
 // null means "no valid baseline yet" — every caller must skip the metric.
@@ -291,7 +292,7 @@ function guidance(last, hist, H, F, hm, cv){
     } else {
       body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
     }
-       if(flags.length>1){
+    if(flags.length>1){
       const watch=[...flags].sort((a,b)=>(cv[a.k]||1)-(cv[b.k]||1))[0];
       const rest=flags.slice(1).map(x=>x.label);
       const listed=rest.length===1?rest[0]:rest.slice(0,-1).join(', ')+' and '+rest[rest.length-1];
@@ -304,7 +305,7 @@ function guidance(last, hist, H, F, hm, cv){
   // a clean result.
   for(const k of Object.keys(REGIME)){
     if(regimeSeries(hist,k)) continue;
-    body+=`<p>Wet diapers are not being judged tonight: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} nights (${regimeCount(hist,k)} so far). Daytime changes stay comparable if you want a proxy in the meantime.</p>`;
+    body+=`<p>${cap(LABELS[k]||k)} are not being judged tonight: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} nights (${regimeCount(hist,k)} so far). Daytime changes stay comparable if you want a proxy in the meantime.</p>`;
   }
   // the one escalation this data supports
   // Require a real gap, not a hairline, before saying anything medical.
