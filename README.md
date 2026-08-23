@@ -1,4 +1,4 @@
-# Infant Sleep Predictor
+# Understand Infant Sleep
 
 A tool that answers one question about your baby's sleep: **is this normal for them?**
 
@@ -6,9 +6,9 @@ Tracker apps answer a different question. They tell you what changed since yeste
 
 This tool builds a normal range out of **your own child's history** and shows you where last night landed inside it. No population averages, no age brackets, no comparison to other babies. Your baby's range is computed from your baby.
 
-I built it because I couldn't stop computing, and it turned out that most nights the answer was that nothing was wrong. [Why I built this →](#why-i-built-this)
+**Solving infant sleep is not predicting what a baby will do. It is managing what parents should know and expect.** That distinction is the whole point of this repo. [More on it below.](#the-mental-model)
 
-**[Open the tool →](https://alicezheng-ai.github.io/infant-sleep-predictor/)**
+**[Open the tool →](https://alicezheng-ai.github.io/understand-infant-sleep/)**
 
 Everything runs in your browser. Nothing is uploaded, nothing is stored, and no server sees your data.
 
@@ -68,6 +68,46 @@ Sex is a different question with a shorter answer: the sex-specific charts peopl
 
 **Where age would matter is exactly where this tool doesn't go** — telling you whether your baby's range is *healthy*. That requires population norms, and it belongs with your pediatrician.
 
+
+## The mental model
+
+**Solving infant sleep is not predicting what a baby will do. It is managing what parents should know and expect.**
+
+I started this project trying to forecast my son's nights, and I got reasonably good at the statistics before noticing the forecasts were useless. Not merely inaccurate — inert. Ask what I would have done differently last night knowing his longest stretch would run 5.7 hours instead of 3.6. Nothing. Same feed, same bath, same transfer at fifteen minutes. The prediction had no lever attached to it.
+
+That is the real disqualification, and it matters more than the hit rate. A weather forecast that was wrong as often as mine would still earn its keep, because "70% chance of rain" attaches to an umbrella. There is no umbrella here. Nothing about tonight's number changes what a parent does tonight.
+
+The one forecast that ever paid off was the vaccination night, and it worked precisely because it wasn't about my son's endogenous variation. It was about an intervention I scheduled myself, with a known effect and three actions attached: clear the next day, expect the long stretch to collapse, and don't count those nights as trend data. Prediction earns its place when it concerns your own inputs. It doesn't when it concerns a baby's ordinary night-to-night noise.
+
+Meanwhile the questions that actually changed my behavior were all backward-looking and interpretive:
+
+- Is a short nap day a real drop, or did I just switch from contact naps to independent ones and start measuring a different thing?
+- Was last week genuinely worse, or did I misremember which week was which?
+- Is this weight gain concerning, or did I make an arithmetic error?
+- Is the variance in *how much* he sleeps, or only in *when he wakes me*?
+
+Every one had an answer. Every answer changed what I did or stopped doing. Not one required knowing anything about the coming night.
+
+The last of those turned out to be the load-bearing finding. Over twenty nights my son's total night sleep varied by about 6%, while his longest single block varied by 17% and his day sleep by 21%. The volume was nearly constant; the architecture churned. And architecture is the part a parent feels, because it is the part that wakes you. So a week that feels like chaos can contain almost identical totals — the exhaustion is real, the alarm is not, and no amount of prediction would have told me that. A baseline did, in about four seconds.
+
+That is what this tool tries to be. Not a forecast. A way to know what to expect and to tell signal from noise at 3am, so the computing has somewhere useful to go.
+
+## What to expect from infant sleep
+
+Most of the distress around infant sleep comes from expecting the wrong thing. A few facts that would have saved me weeks:
+
+**The normal range is enormous.** A [meta-analysis of 34 studies](https://www.sciencedirect.com/science/article/abs/pii/S1087079210000936) puts average infant sleep at 12.8 hours per 24, with a normal range of **9.7 to 15.9 hours**. That band is six hours wide. The [AASM and AAP recommend](https://publications.aap.org/aapnews/news/6630/AAP-endorses-new-recommendations-on-sleep-times) 12–16 hours per 24 for infants 4–12 months. When you compute how far your baby is from "14 hours" every night, you are measuring distance from the midpoint of a very wide distribution, and the answer means much less than it feels like it does.
+
+**They wake often because of how infant sleep is built, not because something is wrong.** An infant sleep cycle runs roughly 50 minutes against an adult's 90–110, and babies spend about half their sleep in active (REM) sleep rather than the quarter adults do. Shorter cycles and lighter sleep mean more frequent surfacing. This is normal architecture, not a defect, and it's why a 45-minute nap is a complete unit of sleep rather than a failed long one.
+
+**Everyone wakes at night — the skill being learned is resettling.** Healthy children surface several times a night and often return to sleep without ever registering it. The developmental milestone is not "stops waking," it's "can get back down alone." Until that skill arrives, you are the mechanism, and there is nothing wrong with either of you.
+
+**Consolidation arrives on its own schedule, and later than the internet implies.** The [largest changes happen in the first four months](https://pubmed.ncbi.nlm.nih.gov/20974775/); about half of infants can manage an 8-hour stretch by 3 months and most by 6. But [25–50% of 6-to-12-month-olds](https://onlinelibrary.wiley.com/doi/10.1002/pdi3.76) still wake in ways their parents find disruptive. A baby who isn't sleeping through at 4 months is not behind.
+
+**A bad night usually has a boring explanation.** Vaccinations within the past week measurably shorten night sleep. So do illness, teething, travel, a new person doing bedtime, and a nap that ran late. When something changes, look at the week rather than the night.
+
+**Averages describe populations, not your baby.** Your child has their own range, and it sits somewhere inside the wide normal band without necessarily sitting near the middle of it. That is the entire premise of this tool: the useful comparison is your baby last month, not a reference curve they were never going to trace.
+
 ## What this is not
 
 This is a descriptive tool. It tells you what is usual for one child. It cannot tell you whether that is healthy, and it does not know anything about your child beyond the file you load.
@@ -92,13 +132,13 @@ The single most useful finding, and the one this tool is built on: **night sleep
 
 ## Why I built this
 
-My pediatrician's advice was to focus on feeding and diapers and to treat sleep as largely outside a parent's control. He's right about what's measurable and what warrants a call, and he's right that babies aren't trying to fit the AAP curve — they sleep in wildly different patterns from one day to the next and almost all of it is normal. I still don't think that makes sleep not worth attention. What parents can control is the environment: whether the room is dark, whether the transfer works, whether the day ran on assisted naps or independent ones. You can't make a baby sleep. You can build the conditions where enough sleep is possible, and then find out whether it worked.
+Infant sleep can be described mathematically. It cannot be solved mathematically, and no amount of description does the work.
 
-The other reason is that I couldn't stop computing. Postpartum anxiety had me running the same arithmetic every night — how far is he from fourteen hours, was that nap an anomaly, was last night actually bad or did it only feel bad because I was awake for it. Knowing I was overthinking never slowed it down. I was always afraid I'd miss something.
+What the math can do is set expectations — tell you what your baby's nights actually look like, how much they vary, and whether last night was unusual or just Tuesday. What it cannot do is any of the work. The hard part is a person picking up a baby at 2am and settling them, over and over, because the baby cannot yet do it alone. No model shortens that. It gets shorter when the baby develops the skill, on a timeline you don't control.
 
-What I needed was to follow him and watch the broad trend, which is good advice I could not follow by willpower. So I built the trend instead. Watching it now takes one upload rather than a night of arithmetic, and the comparison is my own son rather than a curve he was never going to fit.
+So this tool is not going to fix anyone's sleep, and I'd distrust anything that claimed otherwise. What it can realistically do is two things. It reads the signal out of data that would otherwise just generate anxiety — most of what a tracker shows you is noise, and without a baseline you cannot tell which numbers deserve attention. And it gives an anxious parent something better to do with the computing than compute. That was the actual problem I was solving. My pediatrician's advice was to watch the broad trend, which was correct and which I could not follow by willpower. So I built the trend.
 
-That is the design goal. Not more insight. Fewer false alarms.
+Most nights, the answer is that nothing is wrong. Being able to see that quickly is worth more than any prediction.
 
 ## How the model got built
 
