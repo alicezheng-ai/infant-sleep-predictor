@@ -71,7 +71,7 @@ Sex is a different question with a shorter answer: the sex-specific charts peopl
 
 ## The mental model
 
-**Solving infant sleep is not predicting what a baby will do. It is managing what parents should know and expect. More on this in my **[LinkedIn article](https://www.linkedin.com/pulse/i-stopped-asking-ai-predict-my-baby-started-help-me-understand-zheng-eqjbc/)****
+**Solving infant sleep is not predicting what a baby will do. It is managing what parents should know and expect. More on this in my **[LinkedIn article](https://www.linkedin.com/pulse/i-stopped-asking-ai-predict-my-baby-started-help-me-understand-zheng-eqjbc/).****
 
 I started this project trying to forecast my son's nights, and I got reasonably good at the statistics before noticing the forecasts were useless. Not merely inaccurate — inert. Ask what I would have done differently last night knowing his longest stretch would run 5.7 hours instead of 3.6. Nothing. Same feed, same bath, same transfer at fifteen minutes. The prediction had no lever attached to it.
 
