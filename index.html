@@ -285,18 +285,19 @@ function guidance(last, hist, H, F, hm, cv){
     const f=flags[0];
     const pct=k=>Math.round((cv[k]||0.2)*100);
     if(f.st.run<=1){
-      body=`<p><strong>Probably just one night.</strong> ${cap(f.label)} came in ${f.dir} the usual range, but it was not ${f.dir} range the night before. Single nights swing a lot at this age and rarely mean anything on their own. Worth another look tomorrow, not a change tonight.</p>`;
+      body=`<p><strong      body=`<p><strong>Probably just one night.</strong> ${cap(f.label)} came in ${f.dir} range, after sitting inside it the night before. Single nights swing a lot at this age and rarely mean much alone. Worth a second look tomorrow rather than a change tonight.</p>`;
     } else if((cv[f.k]||0.2) > CV_CEILING){
       body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). This measure moves ${pct(f.k)}% from night to night on its own, so a short run of it is weak evidence. Watch the steadier numbers before changing anything.</p>`;
     } else {
       body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
     }
-    if(flags.length>1){
+       if(flags.length>1){
       const watch=[...flags].sort((a,b)=>(cv[a.k]||1)-(cv[b.k]||1))[0];
-      const others=flags.length-1, verb=flags.length>2?'s are':' is';
+      const rest=flags.slice(1).map(x=>x.label);
+      const listed=rest.length===1?rest[0]:rest.slice(0,-1).join(', ')+' and '+rest[rest.length-1];
       body += watch.k===f.k
-        ? `<p>${others} other measure${verb} outside range too. ${cap(f.label)} is still the one to watch: at ${pct(f.k)}% night-to-night it varies least of the ones flagged, so the same size of change means more there.</p>`
-        : `<p>${others} other measure${verb} outside range too. ${cap(watch.label)} is the one to watch, not ${f.label} — it varies ${pct(watch.k)}% from night to night against ${pct(f.k)}%, so the same size of change means more there.</p>`;
+        ? `<p>Also outside range: ${listed}. ${cap(f.label)} still carries the most information of the group, moving ${pct(f.k)}% from one night to the next.</p>`
+        : `<p>Also outside range: ${listed}. Weigh ${watch.label} most heavily — it moves ${pct(watch.k)}% night to night against ${pct(f.k)}% for ${f.label}, so an equal shift there means more.</p>`;
     }
   }
   // Say plainly when a measure has been withheld, so its silence is not read as
