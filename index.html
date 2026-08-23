@@ -70,6 +70,7 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 .mname{font-size:14.5px; font-weight:500}
 .mval{font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:500}
 .mval.inr{color:var(--calm)} .mval.out{color:var(--note)} .mval.far{color:var(--far)}
+.mval.none{color:var(--dim)}
 .mnote{font-size:12.5px; color:var(--muted); margin-bottom:12px}
 
 .strip{position:relative; height:34px}
@@ -122,6 +123,8 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
   <h2>How these are counted</h2>
   <p>Everything here is computed from your own child's history — nothing is compared to a population average. A <strong>night</strong> is every sleep starting between 18:00 and 08:00, grouped under the date it began the evening on. <strong>Day sleep</strong> is every sleep starting between 06:00 and 18:00. The <strong>anchor</strong> is the longest single block of a night.</p>
   <p>The band is the middle 80% of the last 21 nights — the normal range. The thin line is the median. The dot is the most recent night. Feed metrics use only the last 16 days, since logging habits drift.</p>
+  <p>A run of nights outside the band only counts as a run if they fall on the <strong>same side</strong> of it. A long night does not extend a run of short ones. Measures that swing more than 12% from night to night can go outside range without that meaning anything, so they are reported without a cause suggested.</p>
+  <p>When something changes about how a number is produced rather than about your baby — a different diaper at night, a different way of stopping the feed timer — the old range no longer applies. Those measures are held back until enough nights accumulate under the new arrangement.</p>
   <p>Your tracker app uses different day boundaries, so its totals will not match these. Neither is wrong; they answer different questions.<br><br>This is a descriptive tool, not medical advice. It describes what is usual for one child and cannot tell you whether that is healthy. Growth, feeding adequacy, and anything that worries you belong with your pediatrician.</p>
 </div>
 
@@ -214,6 +217,14 @@ function strip(name, note, val, arr, fmt, opt){
     </div>`;
 }
 
+// A metric with no valid baseline still gets a row, but no range and no verdict.
+function noBand(name, note, val, fmt){
+  return `<div class="metric">
+    <div class="mhead"><span class="mname">${name}</span><span class="mval none">${fmt(val)}</span></div>
+    <div class="mnote">${note}</div>
+    </div>`;
+}
+
 // Which recent nights fall outside the band on the SAME side as tonight, and
 // how long that signed run is. An above-band night does not extend a below-band
 // run: it ends it.
@@ -232,18 +243,36 @@ function streak(hist, last, key, lo, hi){
 const cap = s => s[0].toUpperCase() + s.slice(1);
 
 // Above this CV a measure can report its value and direction but must not claim
-// a pattern or open the causal menu. anch runs 0.167 here against 0.056 for tot.
+// a pattern or open the causal menu. anch runs about 0.17 against 0.06 for tot.
 const CV_CEILING = 0.12;
+
+// R7 — overnight Coterie from the night of 2026-08-21. Wet count now measures
+// diaper changes, not voids: one overnight diaper absorbs several. Not
+// comparable across the switch, so the band is rebuilt from the new regime only.
+const REGIME={wet:'2026-08-21'};
+const REGIME_WHY={wet:'the overnight diaper changed on 2026-08-21, so this count now measures changes rather than voids'};
+const MIN_REGIME_N=7;
+
+// null means "no valid baseline yet" — every caller must skip the metric.
+function regimeSeries(hist, k){
+  const from=REGIME[k]; if(!from) return hist.map(r=>r[k]);
+  const rows=hist.filter(r=>r.k>=from);
+  return rows.length>=MIN_REGIME_N ? rows.map(r=>r[k]) : null;
+}
+function regimeCount(hist, k){
+  const from=REGIME[k]; return from? hist.filter(r=>r.k>=from).length : hist.length;
+}
 
 function guidance(last, hist, H, F, hm, cv){
   const FEED=['feeds','feedMin'];
-  const src=k=>FEED.includes(k)?F(k):H(k);
-  const band=k=>[q(src(k),.10), q(src(k),.90)];
+  const src=k=>FEED.includes(k)?F(k):regimeSeries(hist,k);
+  const band=k=>{const a=src(k); return a?[q(a,.10), q(a,.90)]:null;};
   const flags=[];
   for(const [k,label,fmt] of [['tot','night sleep total',hm],['wakes','night wakes',String],
        ['anch','longest block',hm],['dayTot','day sleep',hm],['naps','nap count',String],
        ['feeds','feed count',String],['feedMin','nursing minutes',hm],['wet','wet diapers',String]]){
-    const [lo,hi]=band(k); const v=last[k];
+    const b=band(k); if(!b) continue;
+    const [lo,hi]=b; const v=last[k];
     if(v>=lo&&v<=hi) continue;
     const st=streak(hist,last,k,lo,hi);
     flags.push({k,label,dir:v>hi?'above':'below',st,weight:(1/(cv[k]||0.2))*(1+st.run)});
@@ -270,10 +299,17 @@ function guidance(last, hist, H, F, hm, cv){
         : `<p>${others} other measure${verb} outside range too. ${cap(watch.label)} is the one to watch, not ${f.label} — it varies ${pct(watch.k)}% from night to night against ${pct(f.k)}%, so the same size of change means more there.</p>`;
     }
   }
+  // Say plainly when a measure has been withheld, so its silence is not read as
+  // a clean result.
+  for(const k of Object.keys(REGIME)){
+    if(regimeSeries(hist,k)) continue;
+    body+=`<p>Wet diapers are not being judged tonight: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} nights (${regimeCount(hist,k)} so far). Daytime changes stay comparable if you want a proxy in the meantime.</p>`;
+  }
   // the one escalation this data supports
   // Require a real gap, not a hairline, before saying anything medical.
-  const [wlo,whi]=band('wet'), [flo,fhi]=band('feedMin');
-  if(last.wet <= wlo-1 && last.feedMin < flo-Math.max((fhi-flo)*0.15, 8))
+  // Both halves need a valid baseline — a withheld metric cannot trigger it.
+  const wb=band('wet'), fb=band('feedMin');
+  if(wb && fb && last.wet <= wb[0]-1 && last.feedMin < fb[0]-Math.max((fb[1]-fb[0])*0.15, 8))
     body+=`<p class="esc">Wet diapers and feeding are both below range on the same day. That combination is the one worth calling your pediatrician about rather than watching.</p>`;
   return `<div class="guide"><div class="lbl">What to make of this</div>${body}</div>`;
 }
@@ -300,6 +336,7 @@ function render(d){
     const dm=q(rec,.5)-q(old,.5);
     if(Math.abs(dm)>=20) drift=`<div class="drift">His baseline is moving: night sleep over the last 7 nights runs ${dm>0?'about '+Math.round(dm)+' min longer':'about '+Math.round(-dm)+' min shorter'} than the two weeks before. The range below blends both, so it lags a little behind where he is now.</div>`;
   }
+  const wetArr=regimeSeries(hist,'wet');
 
   return `<div class="night">
       <div class="lbl">Night of ${last.k} · ${hist.length} nights compared</div>
@@ -316,7 +353,9 @@ function render(d){
   + strip('Naps','Count of daytime sleeps',last.naps,H('naps'),num,{floor:2})
   + strip('Feeds','Sessions, not volume'+fnote,last.feeds,F('feeds'),num,{floor:3})
   + strip('Nursing minutes','Whatever your feed timer actually measures'+fnote,last.feedMin,F('feedMin'),hm,{floor:15})
-  + strip('Wet diapers','The best intake proxy between weigh-ins',last.wet,H('wet'),num,{floor:2});
+  + (wetArr
+      ? strip('Wet diapers','The best intake proxy between weigh-ins',last.wet,wetArr,num,{floor:2})
+      : noBand('Wet diapers','No range yet — '+REGIME_WHY.wet+'. Rebuilding from '+MIN_REGIME_N+' nights on the new arrangement ('+regimeCount(hist,'wet')+' so far).',last.wet,num));
 }
 
 const el=id=>document.getElementById(id);
