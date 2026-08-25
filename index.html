@@ -43,7 +43,6 @@ h1{
   margin-bottom:7px;
 }
 .sub{color:var(--muted); font-size:13.5px; margin-bottom:24px}
-
 .drop{
   display:block; background:var(--surface2);
   border:1px dashed var(--band); border-radius:12px; padding:17px;
@@ -53,7 +52,6 @@ h1{
 .drop:hover,.drop:focus-visible{border-color:var(--calm); color:var(--text)}
 .drop:focus-visible{outline:2px solid var(--calm); outline-offset:2px}
 input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
-
 .night{
   background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow);
   border-radius:14px; padding:19px 19px 17px; margin-bottom:30px;
@@ -64,7 +62,6 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 .night .big span{font-size:19px; color:var(--muted); margin-left:7px}
 .night .verdict{margin-top:11px; font-size:14px; color:var(--calm)}
 .night .verdict.note{color:var(--note)}
-
 .metric{margin-bottom:28px}
 .mhead{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px}
 .mname{font-size:14.5px; font-weight:500}
@@ -72,7 +69,6 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 .mval.inr{color:var(--calm)} .mval.out{color:var(--note)} .mval.far{color:var(--far)}
 .mval.none{color:var(--dim)}
 .mnote{font-size:12.5px; color:var(--muted); margin-bottom:12px}
-
 .strip{position:relative; height:34px}
 .rail{position:absolute; top:15px; left:0; right:0; height:3px;
   background:var(--surface2); border-radius:2px}
@@ -85,8 +81,8 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 .dot.far{background:var(--far); color:var(--far)}
 .ends{display:flex; justify-content:space-between;
   font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); margin-top:1px}
-
-
+.grp{font-size:10.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--dim);
+  border-top:1px solid var(--line); padding-top:16px; margin-bottom:16px}
 .defs{border-top:1px solid var(--line); margin-top:36px; padding-top:19px;
   font-size:12.5px; color:var(--muted); line-height:1.65}
 .defs h2{font-family:'Fraunces',Georgia,serif; font-weight:300; font-size:19px;
@@ -101,6 +97,7 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 .guide strong{font-weight:500; color:var(--calm)}
 .guide .esc{margin-top:12px; padding-top:12px; border-top:1px solid var(--band); color:var(--far)}
 .drift{margin-top:11px; font-size:12.5px; color:var(--muted); line-height:1.55}
+.drift b{color:var(--text); font-weight:500}
 .prov{margin-top:10px;font-size:12.5px;color:var(--note)}
 .err{color:var(--far); font-size:13.5px; margin-bottom:18px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -121,15 +118,17 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 
 <div class="defs">
   <h2>How these are counted</h2>
-  <p>Everything here is computed from your own child's history — nothing is compared to a population average. A <strong>night</strong> is every sleep starting between 18:00 and 08:00, grouped under the date it began the evening on. <strong>Day sleep</strong> is every sleep starting between 06:00 and 18:00. The <strong>anchor</strong> is the longest single block of a night.</p>
+  <p>Everything here is computed from your own child's history — nothing is compared to a population average.</p>
+  <p>A <strong>night</strong> is a chain of sleeps, not a clock window. It begins at the first sleep starting after 18:30 whose chain runs past 04:00, and it continues through every following sleep separated by a gap of an hour or less. The first gap longer than an hour ends the night. This keeps an early-evening catnap out of the front of the night and a morning nap out of the back of it — counting a 07:30 nap as night sleep after a 06:10 wake inflates the total by half an hour or more, which is enough to invent a trend that is not there.</p>
+  <p><strong>Day sleep</strong> is everything from that morning's final wake until 18:30 the same day, so the day and the night that follows it are paired and nothing is counted twice. The <strong>anchor</strong> is the longest single block of a night. <strong>Time in bed</strong> runs from the first sleep of the night to the final wake, and <strong>sleep efficiency</strong> is the night total as a share of it.</p>
+  <p>Night sleep can rise for two unrelated reasons: your baby sleeps better, or your baby is in bed longer. Only efficiency separates them, so when the total moves, this reports the split rather than the total alone. A later recorded morning wake also lengthens the night — and once a baby starts waking quietly and playing, the recorded wake is only an upper bound, so a gain sitting at that end is the least trustworthy kind.</p>
   <p>The band is the middle 80% of the last 21 nights — the normal range. The thin line is the median. The dot is the most recent night. Feed metrics use only the last 16 days, since logging habits drift.</p>
-  <p>A run of nights outside the band only counts as a run if they fall on the <strong>same side</strong> of it. A long night does not extend a run of short ones. Measures that swing more than 12% from night to night can go outside range without that meaning anything, so they are reported without a cause suggested.</p>
+  <p>A run of nights outside the band only counts as a run if they fall on the <strong>same side</strong> of it. A long night does not extend a run of short ones. Measures that swing more than 12% from night to night can go outside range without that meaning anything, so they are reported without a cause suggested. A miss smaller than the measure's own resolution is not reported at all.</p>
   <p>When something changes about how a number is produced rather than about your baby — a different diaper at night, a different way of stopping the feed timer — the old range no longer applies. Those measures are held back until enough nights accumulate under the new arrangement.</p>
   <p>Your tracker app uses different day boundaries, so its totals will not match these. Neither is wrong; they answer different questions.<br><br>This is a descriptive tool, not medical advice. It describes what is usual for one child and cannot tell you whether that is healthy. Growth, feeding adequacy, and anything that worries you belong with your pediatrician.</p>
 </div>
 
 <script>
-
 function parseCSV(t){
   const rows=[]; let f='',row=[],q=false;
   for(let i=0;i<t.length;i++){
@@ -144,54 +143,124 @@ function parseCSV(t){
   return rows;
 }
 
-const pd = s => { const m=String(s).trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/); 
+const pd = s => { const m=String(s).trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
   return m? new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]) : null; };
 const dkey = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const hm = m => Math.floor(m/60)+'h'+String(Math.round(m%60)).padStart(2,'0')+'m';
+const clock = d => String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 const q = (a,p) => { const s=[...a].sort((x,y)=>x-y); const i=(s.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
   return s[lo]+(s[hi]-s[lo])*(i-lo); };
+const med = a => q(a,.5);
+
+// ---------------------------------------------------------------------------
+// Night boundaries.
+//
+// A night is a CHAIN, not a clock window. Grouping every sleep that starts
+// between 18:00 and 08:00 into "night" folds a 07:30 morning nap into the
+// previous night whenever the baby wakes early, and folds a 06:30 nap into both
+// night and day at once. On this data that inflated the night total by about
+// 29 min and produced a phantom consolidation trend.
+// ---------------------------------------------------------------------------
+const NIGHT_OPEN_H = 18.5;   // earliest a night may begin
+const NIGHT_REACH_H = 4;     // the chain must still be going past 04:00
+const CHAIN_GAP = 60;        // a gap longer than this ends the night, in minutes
+
+function buildNights(sleeps){
+  const byDate = {};
+  for(const s of sleeps){
+    // a sleep starting before NIGHT_OPEN_H belongs to the previous evening's pool
+    const h = s.t.getHours() + s.t.getMinutes()/60;
+    const k = h >= NIGHT_OPEN_H ? dkey(s.t) : dkey(new Date(s.t - 24*3600e3));
+    (byDate[k] = byDate[k] || []).push(s);
+  }
+  const nights = {};
+  for(const k of Object.keys(byDate)){
+    const pool = byDate[k].sort((a,b)=>a.t-b.t);
+    const base = new Date(k+'T00:00:00');
+    const mustReach = +base + (24 + NIGHT_REACH_H)*3600e3;
+    let chosen = null;
+    for(let st=0; st<pool.length && !chosen; st++){
+      const keep=[pool[st]];
+      for(let i=st+1;i<pool.length;i++){
+        const gap = (pool[i].t - keep[keep.length-1].end)/60000;
+        if(gap > CHAIN_GAP) break;
+        keep.push(pool[i]);
+      }
+      if(+keep[keep.length-1].end >= mustReach) chosen = keep;
+    }
+    if(chosen) nights[k] = chosen;
+  }
+  return nights;
+}
 
 function build(rows){
   const H=rows[0], ix=n=>H.indexOf(n);
   const cT=ix('Type'), cS=ix('Start Date/time'), cE=ix('[Sleep] End Date/time'),
-        cD=ix('[Sleep] Duration (Seconds)'), cDp=ix('[Diaper] Type'),
+        cD=ix('[Sleep] Duration (Seconds)'), cDp=ix('[Diaper] Type'), cN=ix('Note'),
         cBL=ix('[Breastfeed] Left Duration (Seconds)'), cBR=ix('[Breastfeed] Right Duration (Seconds)');
   if(cT<0||cS<0) throw new Error('This file is missing a Type or Start Date/time column, so it cannot be read.');
 
   const sleeps=[], feeds=[], wets=[];
   for(let i=1;i<rows.length;i++){
     const r=rows[i]; if(!r[cS]) continue; const t=pd(r[cS]); if(!t) continue;
-    if(r[cT]==='Sleep'){ const d=parseFloat(r[cD])/60; if(d>0) sleeps.push({t,d}); }
+    if(r[cT]==='Sleep'){
+      const d=parseFloat(r[cD])/60;
+      if(d>0){ const e = (cE>=0 && pd(r[cE])) || new Date(+t + d*60000); sleeps.push({t, end:e, d}); }
+    }
     else if(r[cT]==='Breastfeed'||r[cT]==='Bottle Feed'){
       const l=parseFloat(r[cBL])||0, rr=parseFloat(r[cBR])||0; feeds.push({t,d:(l+rr)/60}); }
-    else if(r[cT]==='Diaper' && /Wet/i.test(r[cDp]||'')) wets.push({t});
+    else if(r[cT]==='Diaper' && /Wet/i.test(r[cDp]||'')) wets.push({t, size:wetSize(cN>=0?r[cN]:'')});
   }
   if(!sleeps.length) throw new Error('No sleep records found in this file.');
   sleeps.sort((a,b)=>a.t-b.t);
 
-  const nights={}, days={};
-  for(const s of sleeps){
-    const h=s.t.getHours();
-    if(h>=18||h<8){ const k=dkey(new Date(s.t-12*3600e3)); (nights[k]=nights[k]||[]).push(s); }
-    if(h>=6&&h<18){ const k=dkey(s.t); (days[k]=days[k]||[]).push(s); }
-  }
-  const cnt=(arr,k,lo,hi)=>arr.filter(x=>{const h=x.t.getHours();
-    return dkey(h<lo? new Date(x.t-12*3600e3):x.t)===k;}).length;
+  const nights = buildNights(sleeps);
+  const keys = Object.keys(nights).sort();
 
-  const rec=Object.keys(nights).sort().map(k=>{
-    const ns=nights[k], ds=days[k]||[];
-    const tot=ns.reduce((a,b)=>a+b.d,0), anch=Math.max(...ns.map(x=>x.d));
-    const dayTot=ds.reduce((a,b)=>a+b.d,0);
-    const fd=feeds.filter(f=>dkey(f.t)===k), wd=wets.filter(w=>dkey(w.t)===k);
-    return {k, tot, anch, wakes:ns.length-1, dayTot, naps:ds.length,
-            feeds:fd.length, feedMin:fd.reduce((a,b)=>a+b.d,0), wet:wd.length};
-  }).filter(r=>r.tot>120);
+  const rec = keys.map((k,i)=>{
+    const ns = nights[k];
+    const onset = ns[0].t, wake = ns[ns.length-1].end;
+    const tot = ns.reduce((a,b)=>a+b.d,0);
+    const window = (wake - onset)/60000;
+
+    // day sleep for date k: from that morning's final wake to 18:30 the same day.
+    const prev = i>0 ? nights[keys[i-1]] : null;
+    const dayFrom = prev ? prev[prev.length-1].end : new Date(k+'T06:00:00');
+    const dayTo = +new Date(k+'T00:00:00') + NIGHT_OPEN_H*3600e3;
+    const ds = sleeps.filter(s => s.t >= dayFrom && +s.t < dayTo);
+
+    const fd = feeds.filter(f=>dkey(f.t)===k), wd = wets.filter(w=>dkey(w.t)===k);
+    const scored = wd.filter(w=>w.size!==null);
+    return {k, tot, window, eff: 100*tot/window,
+      anch: Math.max(...ns.map(x=>x.d)), wakes: ns.length-1,
+      onsetM: onset.getHours()*60+onset.getMinutes(),
+      wakeM: wake.getHours()*60+wake.getMinutes(),
+      onset, wake,
+      dayTot: ds.reduce((a,b)=>a+b.d,0), naps: ds.length,
+      feeds: fd.length, feedMin: fd.reduce((a,b)=>a+b.d,0),
+      wet: wd.length,
+      wetIdx: scored.reduce((a,b)=>a+b.size,0),
+      wetCov: wd.length ? scored.length/wd.length : 0};
+  }).filter(r=>r.tot>120 && r.eff<=100);
+
+  if(!rec.length) throw new Error('No complete nights found. A night needs a chain of sleeps running past 04:00.');
 
   const EX=['2026-08-14','2026-08-15'];
   const last=rec[rec.length-1];
   const hist=rec.slice(0,-1).filter(r=>!EX.includes(r.k)).slice(-21);
   if(hist.length<5) throw new Error('Only '+hist.length+' complete night'+(hist.length===1?'':'s')+' found. This needs at least 5 to show anything useful, and 10 before the range means much.');
   return {last, hist};
+}
+
+// Size words in the diaper note, used to keep an intake proxy alive when the
+// raw count stops meaning anything. See REGIME below.
+function wetSize(note){
+  const n=String(note||'').toLowerCase();
+  if(n.includes('large')) return 3;
+  if(n.includes('medium')) return 2;
+  if(n.includes('small')) return 1;
+  if(n.includes('wet fart')) return 0.5;
+  return null;
 }
 
 function strip(name, note, val, arr, fmt, opt){
@@ -203,7 +272,6 @@ function strip(name, note, val, arr, fmt, opt){
   if(val<lo||val>hi){ cls='out'; verdict = val>hi? 'above the usual range':'below the usual range'; }
   const span=hi-lo, m=Math.max(span*0.5, floor);
   if(val>hi+m || val<lo-m){ cls='far'; verdict=(val>hi?'well above':'well below')+' the usual range'; }
-
   return `<div class="metric">
     <div class="mhead"><span class="mname">${name}</span><span class="mval ${cls}">${fmt(val)}</span></div>
     <div class="mnote">${note} — ${verdict}.</div>
@@ -214,7 +282,7 @@ function strip(name, note, val, arr, fmt, opt){
       <div class="dot ${cls}" style="left:${P(val)}%"></div>
     </div>
     <div class="ends"><span>${fmt(lo)}</span><span>${fmt(hi)}</span></div>
-    </div>`;
+  </div>`;
 }
 
 // A metric with no valid baseline still gets a row, but no range and no verdict.
@@ -222,7 +290,7 @@ function noBand(name, note, val, fmt){
   return `<div class="metric">
     <div class="mhead"><span class="mname">${name}</span><span class="mval none">${fmt(val)}</span></div>
     <div class="mnote">${note}</div>
-    </div>`;
+  </div>`;
 }
 
 // Which recent nights fall outside the band on the SAME side as tonight, and
@@ -243,16 +311,25 @@ function streak(hist, last, key, lo, hi){
 const cap = s => s[0].toUpperCase() + s.slice(1);
 
 // Above this CV a measure can report its value and direction but must not claim
-// a pattern or open the causal menu. anch runs about 0.17 against 0.06 for tot.
+// a pattern or open the causal menu. anch now runs about 0.24 against 0.05 for tot.
 const CV_CEILING = 0.12;
 
-// R7 — overnight Coterie from the night of 2026-08-21. Wet count now measures
-// diaper changes, not voids: one overnight diaper absorbs several. Not
-// comparable across the switch, so the band is rebuilt from the new regime only.
-const REGIME={wet:'2026-08-21'};
-const REGIME_WHY={wet:'the overnight diaper changed on 2026-08-21, so this count now measures changes rather than voids'};
+// A miss smaller than this is not worth a sentence, however tight the band.
+// Efficiency has a CV near 0.03, so without a floor a one-point wobble would
+// outrank everything else in the weighting.
+const MIN_GAP = {tot:15, window:20, eff:2, anch:25, wakes:1, dayTot:30, naps:1,
+                 feeds:1, feedMin:8, wet:1, wetIdx:1.5};
+
+// R7 — night diaper changes stopped from 2026-08-22 unless there is a stool.
+// The wet count counts CHANGES, not voids: one overnight diaper absorbs several.
+// Not comparable across the switch, so the band is rebuilt from the new regime
+// only. The size-weighted index below is the stand-in in the meantime — it fell
+// 9% across the switch against 24% for the raw count.
+const REGIME={wet:'2026-08-22'};
+const REGIME_WHY={wet:'night diaper changes stopped on 2026-08-22, so this count now measures changes rather than voids'};
 const LABELS={wet:'wet diapers'};
 const MIN_REGIME_N=7;
+const MIN_SIZE_COV=0.6;
 
 // null means "no valid baseline yet" — every caller must skip the metric.
 function regimeSeries(hist, k){
@@ -263,24 +340,36 @@ function regimeSeries(hist, k){
 function regimeCount(hist, k){
   const from=REGIME[k]; return from? hist.filter(r=>r.k>=from).length : hist.length;
 }
+// The size index only means anything if most diapers actually carry a size word.
+function sizeUsable(hist, last){
+  const cov = hist.filter(r=>r.wetCov>=MIN_SIZE_COV).length / hist.length;
+  return cov>=0.6 && last.wetCov>=MIN_SIZE_COV;
+}
 
-function guidance(last, hist, H, F, hm, cv){
+function guidance(last, hist, H, F, hm, cv, sizeOK){
   const FEED=['feeds','feedMin'];
   const src=k=>FEED.includes(k)?F(k):regimeSeries(hist,k);
   const band=k=>{const a=src(k); return a?[q(a,.10), q(a,.90)]:null;};
-  const flags=[];
-  for(const [k,label,fmt] of [['tot','night sleep total',hm],['wakes','night wakes',String],
-       ['anch','longest block',hm],['dayTot','day sleep',hm],['naps','nap count',String],
-       ['feeds','feed count',String],['feedMin','nursing minutes',hm],['wet','wet diapers',String]]){
+  const flags=[], near=[];
+  const list=[['tot','night sleep total'],['eff','sleep efficiency'],['wakes','night wakes'],
+    ['anch','longest block'],['dayTot','day sleep'],['naps','nap count'],
+    ['feeds','feed count'],['feedMin','nursing minutes'],['wet','wet diapers']];
+  if(sizeOK) list.push(['wetIdx','wet diaper volume']);
+  for(const [k,label] of list){
     const b=band(k); if(!b) continue;
     const [lo,hi]=b; const v=last[k];
     if(v>=lo&&v<=hi) continue;
+    const gap = v>hi ? v-hi : lo-v;
+    if(gap < (MIN_GAP[k]||0)){ near.push(label); continue; }  // too small to be worth saying
     const st=streak(hist,last,k,lo,hi);
     flags.push({k,label,dir:v>hi?'above':'below',st,weight:(1/(cv[k]||0.2))*(1+st.run)});
   }
+
   let body='';
   if(!flags.length){
-    body=`<p>Everything is inside your baby's usual range. Nothing here needs a change.</p>`;
+    body = near.length
+      ? `<p>Nothing here needs a change. ${cap(near.join(' and '))} ${near.length>1?'are':'is'} a shade outside range, by less than the measure moves on an ordinary night — the strip below will show that, but it is not worth acting on.</p>`
+      : `<p>Everything is inside your baby's usual range. Nothing here needs a change.</p>`;
   } else {
     flags.sort((a,b)=>b.weight-a.weight);
     const f=flags[0];
@@ -301,63 +390,124 @@ function guidance(last, hist, H, F, hm, cv){
         : `<p>Also outside range: ${listed}. Weigh ${watch.label} most heavily — it moves ${pct(watch.k)}% night to night against ${pct(f.k)}% for ${f.label}, so an equal shift there means more.</p>`;
     }
   }
+
   // Say plainly when a measure has been withheld, so its silence is not read as
   // a clean result.
   for(const k of Object.keys(REGIME)){
     if(regimeSeries(hist,k)) continue;
-    body+=`<p>${cap(LABELS[k]||k)} are not being judged tonight: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} nights (${regimeCount(hist,k)} so far). Daytime changes stay comparable if you want a proxy in the meantime.</p>`;
+    body+=`<p>${cap(LABELS[k]||k)} are not being judged tonight: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} nights (${regimeCount(hist,k)} so far). ${sizeOK?'Wet diaper volume below is standing in — it reads the size word in your notes, so it survives the change that the raw count does not.':'Writing Small, Medium or Large in the diaper note would let a size-weighted stand-in fill the gap.'}</p>`;
   }
+
   // the one escalation this data supports
   // Require a real gap, not a hairline, before saying anything medical.
-  // Both halves need a valid baseline — a withheld metric cannot trigger it.
-  const wb=band('wet'), fb=band('feedMin');
-  if(wb && fb && last.wet <= wb[0]-1 && last.feedMin < fb[0]-Math.max((fb[1]-fb[0])*0.15, 8))
+  // Falls back to the size index when the raw count has no valid band, so the
+  // escalation does not go silent for a week every time the diaper changes.
+  const wetKey = regimeSeries(hist,'wet') ? 'wet' : (sizeOK ? 'wetIdx' : null);
+  const wb = wetKey ? [q(src(wetKey),.10), q(src(wetKey),.90)] : null;
+  const fb = band('feedMin');
+  if(wb && fb && last[wetKey] <= wb[0]-(wetKey==='wet'?1:1.5) && last.feedMin < fb[0]-Math.max((fb[1]-fb[0])*0.15, 8))
     body+=`<p class="esc">Wet diapers and feeding are both below range on the same day. That combination is the one worth calling your pediatrician about rather than watching.</p>`;
+
   return `<div class="guide"><div class="lbl">What to make of this</div>${body}</div>`;
 }
 
+// ---------------------------------------------------------------------------
+// Is the baseline moving, and why?
+//
+// A rising night total means one of two unrelated things: the baby sleeps
+// better, or the baby is in bed longer. Reporting the total alone conflates
+// them. Split it into time in bed and efficiency, and when the time-in-bed half
+// dominates, say which end moved — a later recorded morning wake is the least
+// trustworthy source of a gain, because a baby who wakes quietly and plays makes
+// the recorded wake an upper bound.
+// ---------------------------------------------------------------------------
+function driftBlock(hist){
+  const rec=hist.slice(-7), old=hist.slice(-21,-7);
+  if(old.length<7) return '';
+  // Means, not medians. Night total = time in bed minus time awake, and that
+  // identity only survives averaging — medians of three separate series do not
+  // add up, so a median split can report a 21 min gain sitting on a 12 min
+  // window with flat efficiency, which is arithmetically impossible.
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const d=k=>mean(rec.map(r=>r[k]))-mean(old.map(r=>r[k]));
+  const dTot=d('tot');
+  if(Math.abs(dTot)<20) return '';
+
+  const dWin=d('window'), dEff=d('eff'), dOn=d('onsetM'), dWake=d('wakeM');
+  const dir=dTot>0?'longer':'shorter';
+  const n=Math.abs(Math.round(dTot));
+
+  let why;
+  if(Math.abs(dEff)<1.5){
+    // efficiency flat: this is time in bed, not sleep
+    const ends=[];
+    if(Math.abs(dOn)>=8) ends.push(`bedtime moved ${Math.abs(Math.round(dOn))} min ${dOn<0?'earlier':'later'}`);
+    if(Math.abs(dWake)>=8) ends.push(`the recorded morning wake moved ${Math.abs(Math.round(dWake))} min ${dWake>0?'later':'earlier'}`);
+    why = `<b>This is time in bed, not sleep.</b> Efficiency held at ${Math.round(mean(rec.map(r=>r.eff)))}%, so he is not sleeping any better — he is in bed ${Math.abs(Math.round(dWin))} min ${dWin>0?'longer':'shorter'}` +
+          (ends.length?`: ${ends.join(', and ')}.`:'.');
+    if(dWake>=8 && dWake>=Math.abs(dOn))
+      why += ` Most of the gain sits at the morning end, which is the end you can trust least — if he ever wakes quietly and plays before you notice, the recorded wake is only an upper bound.`;
+  } else if(Math.abs(dWin)<15){
+    why = `<b>This one is real.</b> Time in bed barely moved, and efficiency went ${dEff>0?'up':'down'} ${Math.abs(dEff).toFixed(1)} points — he is sleeping ${dEff>0?'better':'worse'} in the same window.`;
+  } else {
+    why = `Time in bed moved ${Math.abs(Math.round(dWin))} min ${dWin>0?'longer':'shorter'} and efficiency moved ${dEff>0?'up':'down'} ${Math.abs(dEff).toFixed(1)} points, so it is part scheduling and part sleep.`;
+  }
+
+  const dAnch=d('anch'), dWakes=d('wakes');
+  let arch='';
+  if(dTot>0 && (dAnch<=-20 || dWakes>=0.5))
+    arch = ` Note that the night got <b>more broken</b> while the total rose — the longest block is ${Math.abs(Math.round(dAnch))} min shorter and there are more wakes. A rising total will not warn you about that, so watch the longest block on its own.`;
+
+  return `<div class="drift">His baseline is moving: night sleep over the last 7 nights runs about ${n} min ${dir} than the two weeks before. ${why}${arch} The range below blends both, so it lags a little behind where he is now.</div>`;
+}
+
 function render(d){
-  const {last,hist}=d, num=v=>String(Math.round(v));
+  const {last,hist}=d, num=v=>String(Math.round(v)), pctf=v=>Math.round(v)+'%';
+
   // R3: breastfeed timing convention changed 2026-08-06. Feed metrics are not
   // comparable across that date, so their range is built only from nights after it.
   const cut=new Date(new Date(last.k)-16*864e5).toISOString().slice(0,10);
   const fh=hist.filter(r=>r.k>=cut);
   const F=k=>(fh.length>=6?fh:hist).map(r=>r[k]);
   const fnote=fh.length>=6?'':' (short history — range may span a change in how you log)';
+
   const lo=q(hist.map(r=>r.tot),.10), hi=q(hist.map(r=>r.tot),.90);
   const ok = last.tot>=lo && last.tot<=hi;
   const H=k=>hist.map(r=>r[k]);
   const cvOf=k=>{const a=H(k),m=a.reduce((x,y)=>x+y,0)/a.length;
     return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/a.length)/(m||1);};
-  const cv={}; for(const k of ['tot','wakes','anch','dayTot','naps','feeds','feedMin','wet']) cv[k]=cvOf(k);
-  // Is the baseline itself moving? At this age three weeks is real development,
-  // so "inside his range" can mean "inside the range he had two weeks ago".
-  const rec=hist.slice(-7).map(r=>r.tot), old=hist.slice(-21,-7).map(r=>r.tot);
-  let drift='';
-  if(old.length>=7){
-    const dm=q(rec,.5)-q(old,.5);
-    if(Math.abs(dm)>=20) drift=`<div class="drift">His baseline is moving: night sleep over the last 7 nights runs ${dm>0?'about '+Math.round(dm)+' min longer':'about '+Math.round(-dm)+' min shorter'} than the two weeks before. The range below blends both, so it lags a little behind where he is now.</div>`;
-  }
-  const wetArr=regimeSeries(hist,'wet');
+  const cv={}; for(const k of ['tot','window','eff','wakes','anch','dayTot','naps','feeds','feedMin','wet','wetIdx']) cv[k]=cvOf(k);
+
+  const sizeOK = sizeUsable(hist, last);
+  const wetArr = regimeSeries(hist,'wet');
 
   return `<div class="night">
-      <div class="lbl">Night of ${last.k} · ${hist.length} nights compared</div>
-      <div class="big">${hm(last.tot)}<span>slept</span></div>
-      <div class="verdict${ok?'':' note'}">${ok?'A normal night for your baby.':(last.tot>hi?'Longer than usual for your baby.':'Shorter than usual for your baby.')} The usual range is ${hm(lo)}–${hm(hi)}.</div>
-      ${hist.length<10?`<div class="prov">Still learning — ${hist.length} of 10 nights. Treat every range below as provisional.</div>`:''}
-      ${drift}
-    </div>`
-  + guidance(last, hist, H, F, hm, cv)
+    <div class="lbl">Night of ${last.k} · ${hist.length} nights compared</div>
+    <div class="big">${hm(last.tot)}<span>slept</span></div>
+    <div class="verdict${ok?'':' note'}">${ok?'A normal night for your baby.':(last.tot>hi?'Longer than usual for your baby.':'Shorter than usual for your baby.')} The usual range is ${hm(lo)}–${hm(hi)}.</div>
+    <div class="drift">${clock(last.onset)} to ${clock(last.wake)} · ${hm(last.window)} in bed · ${Math.round(last.eff)}% of it asleep</div>
+    ${hist.length<10?`<div class="prov">Still learning — ${hist.length} of 10 nights. Treat every range below as provisional.</div>`:''}
+    ${driftBlock(hist)}
+  </div>`
+  + guidance(last, hist, H, F, hm, cv, sizeOK)
+  + `<div class="grp">The night, split three ways</div>`
   + strip('Night sleep total','Usually the steadiest number — it moves less than anything else',last.tot,H('tot'),hm,{floor:25})
+  + strip('Time in bed','First sleep to final wake — the part you control',last.window,H('window'),hm,{floor:30})
+  + strip('Sleep efficiency','Share of time in bed actually asleep. The only one that separates better sleep from a longer night',last.eff,H('eff'),pctf,{floor:3})
+  + `<div class="grp">Inside the night</div>`
   + strip('Longest block (anchor)','The one that feels biggest and varies most',last.anch,H('anch'),hm,{floor:35})
   + strip('Night wakes','Times they surfaced after the longest block',last.wakes,H('wakes'),num,{floor:2})
+  + `<div class="grp">Days, feeding, diapers</div>`
   + strip('Day sleep total','Depends heavily on whether naps were assisted or independent',last.dayTot,H('dayTot'),hm,{floor:45})
   + strip('Naps','Count of daytime sleeps',last.naps,H('naps'),num,{floor:2})
   + strip('Feeds','Sessions, not volume'+fnote,last.feeds,F('feeds'),num,{floor:3})
   + strip('Nursing minutes','Whatever your feed timer actually measures'+fnote,last.feedMin,F('feedMin'),hm,{floor:15})
   + (wetArr
       ? strip('Wet diapers','The best intake proxy between weigh-ins',last.wet,wetArr,num,{floor:2})
-      : noBand('Wet diapers','No range yet — '+REGIME_WHY.wet+'. Rebuilding from '+MIN_REGIME_N+' nights on the new arrangement ('+regimeCount(hist,'wet')+' so far).',last.wet,num));
+      : noBand('Wet diapers','No range yet — '+REGIME_WHY.wet+'. Rebuilding from '+MIN_REGIME_N+' nights on the new arrangement ('+regimeCount(hist,'wet')+' so far).',last.wet,num))
+  + (sizeOK
+      ? strip('Wet diaper volume','Size-weighted from your notes, so it counts what came out rather than how often you changed him',last.wetIdx,H('wetIdx'),v=>v.toFixed(1),{floor:2})
+      : '');
 }
 
 const el=id=>document.getElementById(id);
@@ -365,7 +515,7 @@ el('drop').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.pr
 el('file').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
   const rd=new FileReader();
-  rd.onload=()=>{ el('err').innerHTML=''; 
+  rd.onload=()=>{ el('err').innerHTML='';
     try{ el('out').innerHTML=render(build(parseCSV(rd.result))); }
     catch(x){ el('out').innerHTML=''; el('err').innerHTML='<p class="err">'+x.message+'</p>'; } };
   rd.onerror=()=>{ el('err').innerHTML='<p class="err">Could not read that file.</p>'; };
