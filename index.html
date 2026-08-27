@@ -100,6 +100,7 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 .drift b{color:var(--text); font-weight:500}
 .prov{margin-top:10px;font-size:12.5px;color:var(--note)}
 .err{color:var(--far); font-size:13.5px; margin-bottom:18px}
+.build{margin-top:18px;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -122,6 +123,7 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
   <p>A <strong>night</strong> is a chain of sleeps, not a clock window. It begins at the first sleep starting after 18:30 whose chain runs past 04:00, and it continues through every following sleep separated by a gap of an hour or less. The first gap longer than an hour ends the night. This keeps an early-evening catnap out of the front of the night and a morning nap out of the back of it — counting a 07:30 nap as night sleep after a 06:10 wake inflates the total by half an hour or more, which is enough to invent a trend that is not there.</p>
   <p><strong>Day sleep</strong> is everything from that morning's final wake until 18:30 the same day, so the day and the night that follows it are paired and nothing is counted twice. The <strong>anchor</strong> is the longest single block of a night. <strong>Time in bed</strong> runs from the first sleep of the night to the final wake, and <strong>sleep efficiency</strong> is the night total as a share of it.</p>
   <p>Night sleep can rise for two unrelated reasons: your baby sleeps better, or your baby is in bed longer. Only efficiency separates them, so when the total moves, this reports the split rather than the total alone. A later recorded morning wake also lengthens the night — and once a baby starts waking quietly and playing, the recorded wake is only an upper bound, so a gain sitting at that end is the least trustworthy kind.</p>
+  <p>Sentences about <strong>the baseline</strong> describe a seven-night average against the fourteen before it, and always include last night in the recent window. Sentences about <strong>last night</strong> compare that one night to the spread of the twenty-one before it. The two are never mixed: a rolling average that has drifted does not mean last night drifted, and last night's outlier does not mean the baseline moved.</p>
   <p>The band is the middle 80% of the last 21 nights — the normal range. The thin line is the median. The dot is the most recent night. Feed metrics use only the last 16 days, since logging habits drift.</p>
   <p>A run of nights outside the band only counts as a run if they fall on the <strong>same side</strong> of it. A long night does not extend a run of short ones. Measures that swing more than 12% from night to night can go outside range without that meaning anything, so they are reported without a cause suggested. A miss smaller than the measure's own resolution is not reported at all.</p>
   <p>When something changes about how a number is produced rather than about your baby — a different diaper at night, a different way of stopping the feed timer — the old range no longer applies. Those measures are held back until enough nights accumulate under the new arrangement.</p>
@@ -129,6 +131,8 @@ input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-ev
 </div>
 
 <script>
+const BUILD = 'drift-scope-fix';
+
 function parseCSV(t){
   const rows=[]; let f='',row=[],q=false;
   for(let i=0;i<t.length;i++){
@@ -420,45 +424,107 @@ function guidance(last, hist, H, F, hm, cv, sizeOK){
 // dominates, say which end moved — a later recorded morning wake is the least
 // trustworthy source of a gain, because a baby who wakes quietly and plays makes
 // the recorded wake an upper bound.
+//
+// TWO DEFECTS FIXED HERE:
+//
+//   1. This took `hist`, which is rec.slice(0,-1) — the current night is
+//      removed before it arrives. hist.slice(-7) was therefore the seven nights
+//      ENDING THE NIGHT BEFORE the one on the card, so every figure in the
+//      paragraph described a week the reader was not looking at. It now takes
+//      `last` and puts it in the recent window.
+//
+//   2. The fragmentation sentence read dAnch and dWakes, which are 7-vs-14
+//      window means, and rendered them as a claim about one night ("the night
+//      got more broken"). On 2026-08-26 that printed "45 min shorter" over a
+//      night whose longest block was the 4th longest in 25 nights. Anything
+//      phrased as a claim about one night is now computed from that night
+//      against the 21-night distribution, never from a window mean.
 // ---------------------------------------------------------------------------
-function driftBlock(hist){
-  const rec=hist.slice(-7), old=hist.slice(-21,-7);
-  if(old.length<7) return '';
+
+// Below this, a shorter-anchor claim sits inside the measure's own night-to-night
+// swing. anch has a CV near 0.24, so it needs a wide gate.
+const ANCH_MIN_GAP = 25;
+// A night at or above this percentile of the trailing distribution gets the
+// positive sentence instead of silence.
+const CONSOLIDATED_PCTL = 0.80;
+
+function driftBlock(hist, last){
+  if(!last) throw new Error('driftBlock(hist, last): the current night is required');
+
+  const rec = [...hist.slice(-6), last];   // 7 nights, INCLUDING tonight
+  const old = hist.slice(-20, -6);          // the 14 before that
+  if(old.length < 7 || rec.length < 7) return '';
+
   // Means, not medians. Night total = time in bed minus time awake, and that
   // identity only survives averaging — medians of three separate series do not
   // add up, so a median split can report a 21 min gain sitting on a 12 min
   // window with flat efficiency, which is arithmetically impossible.
-  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
-  const d=k=>mean(rec.map(r=>r[k]))-mean(old.map(r=>r[k]));
-  const dTot=d('tot');
-  if(Math.abs(dTot)<20) return '';
+  const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
+  const d = k => mean(rec.map(r=>r[k])) - mean(old.map(r=>r[k]));
 
-  const dWin=d('window'), dEff=d('eff'), dOn=d('onsetM'), dWake=d('wakeM');
-  const dir=dTot>0?'longer':'shorter';
-  const n=Math.abs(Math.round(dTot));
+  // ---- baseline scope: window means only. Nothing below reads `last`. ----
+  //
+  // Every number in this block is a seven-night average, and every sentence
+  // says so. The card header prints LAST NIGHT's efficiency a few lines above;
+  // an unlabelled second efficiency figure here reads as a contradiction.
+  //
+  // The split is a decomposition, not a verdict. A rising total breaks into
+  // "the window got longer" and "the time in the window got more efficient":
+  //
+  //     dTot  ≈  dWindow × priorEff  +  recentWindow × dEff
+  //
+  // The old text collapsed the first term into "this is time in bed, not
+  // sleep", which is false whenever dTot > 0 — he IS sleeping more. What is
+  // true is where the extra sleep came from, so report the two terms.
+  const dTot=d('tot'), dWin=d('window'), dEff=d('eff'), dOn=d('onsetM'), dWake=d('wakeM');
+  let drift = '';
+  if(Math.abs(dTot) >= 20){
+    const n = Math.abs(Math.round(dTot)), dir = dTot>0 ? 'longer' : 'shorter';
+    const recentEff = mean(rec.map(r=>r.eff)), priorEff = mean(old.map(r=>r.eff));
+    const fromWindow = Math.abs(Math.round(dWin * priorEff/100));
+    const fromEff    = Math.abs(Math.round(mean(rec.map(r=>r.window)) * dEff/100));
+    const effPair = `efficiency averaged ${recentEff.toFixed(1)}% against ${priorEff.toFixed(1)}%`;
 
-  let why;
-  if(Math.abs(dEff)<1.5){
-    // efficiency flat: this is time in bed, not sleep
-    const ends=[];
-    if(Math.abs(dOn)>=8) ends.push(`bedtime moved ${Math.abs(Math.round(dOn))} min ${dOn<0?'earlier':'later'}`);
-    if(Math.abs(dWake)>=8) ends.push(`the recorded morning wake moved ${Math.abs(Math.round(dWake))} min ${dWake>0?'later':'earlier'}`);
-    why = `<b>This is time in bed, not sleep.</b> Efficiency held at ${Math.round(mean(rec.map(r=>r.eff)))}%, so he is not sleeping any better — he is in bed ${Math.abs(Math.round(dWin))} min ${dWin>0?'longer':'shorter'}` +
-          (ends.length?`: ${ends.join(', and ')}.`:'.');
-    if(dWake>=8 && dWake>=Math.abs(dOn))
-      why += ` Most of the gain sits at the morning end, which is the end you can trust least — if he ever wakes quietly and plays before you notice, the recorded wake is only an upper bound.`;
-  } else if(Math.abs(dWin)<15){
-    why = `<b>This one is real.</b> Time in bed barely moved, and efficiency went ${dEff>0?'up':'down'} ${Math.abs(dEff).toFixed(1)} points — he is sleeping ${dEff>0?'better':'worse'} in the same window.`;
-  } else {
-    why = `Time in bed moved ${Math.abs(Math.round(dWin))} min ${dWin>0?'longer':'shorter'} and efficiency moved ${dEff>0?'up':'down'} ${Math.abs(dEff).toFixed(1)} points, so it is part scheduling and part sleep.`;
+    let why;
+    if(Math.abs(dEff) < 1.5){
+      const ends=[];
+      if(Math.abs(dOn)>=8) ends.push(`bedtime averaged ${Math.abs(Math.round(dOn))} min ${dOn<0?'earlier':'later'}`);
+      if(Math.abs(dWake)>=8) ends.push(`the recorded morning wake ${Math.abs(Math.round(dWake))} min ${dWake>0?'later':'earlier'}`);
+      why = `<b>A longer window, not better sleep.</b> About ${fromWindow} of those ${n} min come from more time in bed and ${fromEff} from efficiency — across the two windows, ${effPair}`
+          + (ends.length ? `. Over the same span, ${ends.join(', and ')}.` : '.');
+      if(dTot>0 && dWake>=8 && dWake>=Math.abs(dOn))
+        why += ` Most of the gain sits at the morning end, which is the end you can trust least — if he ever wakes quietly and plays before you notice, the recorded wake is only an upper bound.`;
+    } else if(Math.abs(dWin) < 15){
+      why = `<b>Better sleep in the same window.</b> Time in bed barely moved and ${effPair}, so nearly all of the ${n} min is efficiency rather than schedule.`;
+    } else {
+      why = `About ${fromWindow} of those ${n} min come from time in bed and ${fromEff} from efficiency — ${effPair}. It is part schedule and part sleep.`;
+    }
+    drift = `His baseline is moving: night sleep over the last 7 nights averages about ${n} min ${dir} than the 14 nights before. ${why}`;
   }
 
-  const dAnch=d('anch'), dWakes=d('wakes');
-  let arch='';
-  if(dTot>0 && (dAnch<=-20 || dWakes>=0.5))
-    arch = ` Note that the night got <b>more broken</b> while the total rose — the longest block is ${Math.abs(Math.round(dAnch))} min shorter and there are more wakes. A rising total will not warn you about that, so watch the longest block on its own.`;
+  // ---- night scope: last night against the 21-night spread. --------------
+  // Nothing in this block may read d(), rec or old.
+  const anchHist = hist.map(r=>r.anch), wakeHist = hist.map(r=>r.wakes);
+  const anchMed = med(anchHist), wakeMed = med(wakeHist);
+  const pctl = anchHist.filter(v => v < last.anch).length / anchHist.length;
+  const shortAnchor = last.anch < anchMed - ANCH_MIN_GAP;
+  const extraWakes  = last.wakes > wakeMed;
 
-  return `<div class="drift">His baseline is moving: night sleep over the last 7 nights runs about ${n} min ${dir} than the two weeks before. ${why}${arch} The range below blends both, so it lags a little behind where he is now.</div>`;
+  let arch = '';
+  if(shortAnchor){
+    arch = ` Last night's longest block was ${Math.round(anchMed-last.anch)} min shorter than usual (${hm(last.anch)} against ${hm(anchMed)})`
+         + (extraWakes ? `, with more wakes than usual.` : `.`)
+         + ` A rising total will not warn you about that, so watch the longest block on its own.`;
+  } else if(extraWakes){
+    // More wakes but the anchor held. The old code folded this into the
+    // shorter-anchor sentence and printed a negative anchor delta regardless.
+    arch = ` Last night had ${last.wakes} wakes against a usual ${wakeMed}, though the longest block held at ${hm(last.anch)}.`;
+  } else if(pctl >= CONSOLIDATED_PCTL){
+    arch = ` Last night's longest block was ${hm(last.anch)} — longer than ${Math.round(pctl*100)}% of the last ${anchHist.length} nights.`;
+  }
+
+  if(!drift && !arch) return '';
+  return `<div class="drift">${drift}${arch} The range below blends both, so it lags a little behind where he is now.</div>`;
 }
 
 function render(d){
@@ -487,7 +553,7 @@ function render(d){
     <div class="verdict${ok?'':' note'}">${ok?'A normal night for your baby.':(last.tot>hi?'Longer than usual for your baby.':'Shorter than usual for your baby.')} The usual range is ${hm(lo)}–${hm(hi)}.</div>
     <div class="drift">${clock(last.onset)} to ${clock(last.wake)} · ${hm(last.window)} in bed · ${Math.round(last.eff)}% of it asleep</div>
     ${hist.length<10?`<div class="prov">Still learning — ${hist.length} of 10 nights. Treat every range below as provisional.</div>`:''}
-    ${driftBlock(hist)}
+    ${driftBlock(hist, last)}
   </div>`
   + guidance(last, hist, H, F, hm, cv, sizeOK)
   + `<div class="grp">The night, split three ways</div>`
@@ -507,7 +573,8 @@ function render(d){
       : noBand('Wet diapers','No range yet — '+REGIME_WHY.wet+'. Rebuilding from '+MIN_REGIME_N+' nights on the new arrangement ('+regimeCount(hist,'wet')+' so far).',last.wet,num))
   + (sizeOK
       ? strip('Wet diaper volume','Size-weighted from your notes, so it counts what came out rather than how often you changed him',last.wetIdx,H('wetIdx'),v=>v.toFixed(1),{floor:2})
-      : '');
+      : '')
+  + `<div class="build">build: ${BUILD}</div>`;
 }
 
 const el=id=>document.getElementById(id);
