@@ -350,11 +350,22 @@ function sizeUsable(hist, last){
   return cov>=0.6 && last.wetCov>=MIN_SIZE_COV;
 }
 
+// Cadence. Only the five sleep-architecture measures are scoped to a night;
+// day sleep, naps, feeds and diapers are grouped by calendar day (see the
+// dkey() filters in build()). Writing "after sitting inside it the night
+// before" over a day measure names something that was never measured.
+const NIGHTLY = {tot:1, window:1, eff:1, wakes:1, anch:1};
+const UNIT = {
+  night: {one:'night', many:'nights', prior:'the night before', next:'tomorrow', now:'tonight'},
+  day:   {one:'day',   many:'days',   prior:'the day before',   next:'tomorrow', now:'today'},
+};
+const unitOf = k => NIGHTLY[k] ? UNIT.night : UNIT.day;
+
 function guidance(last, hist, H, F, hm, cv, sizeOK){
   const FEED=['feeds','feedMin'];
   const src=k=>FEED.includes(k)?F(k):regimeSeries(hist,k);
   const band=k=>{const a=src(k); return a?[q(a,.10), q(a,.90)]:null;};
-  const flags=[], near=[];
+  const flags=[], near=[], nearKeys=[];
   const list=[['tot','night sleep total'],['eff','sleep efficiency'],['wakes','night wakes'],
     ['anch','longest block'],['dayTot','day sleep'],['naps','nap count'],
     ['feeds','feed count'],['feedMin','nursing minutes'],['wet','wet diapers']];
@@ -364,7 +375,7 @@ function guidance(last, hist, H, F, hm, cv, sizeOK){
     const [lo,hi]=b; const v=last[k];
     if(v>=lo&&v<=hi) continue;
     const gap = v>hi ? v-hi : lo-v;
-    if(gap < (MIN_GAP[k]||0)){ near.push(label); continue; }  // too small to be worth saying
+    if(gap < (MIN_GAP[k]||0)){ near.push(label); nearKeys.push(k); continue; }  // too small to be worth saying
     const st=streak(hist,last,k,lo,hi);
     flags.push({k,label,dir:v>hi?'above':'below',st,weight:(1/(cv[k]||0.2))*(1+st.run)});
   }
@@ -372,26 +383,30 @@ function guidance(last, hist, H, F, hm, cv, sizeOK){
   let body='';
   if(!flags.length){
     body = near.length
-      ? `<p>Nothing here needs a change. ${cap(near.join(' and '))} ${near.length>1?'are':'is'} a shade outside range, by less than the measure moves on an ordinary night — the strip below will show that, but it is not worth acting on.</p>`
+      ? `<p>Nothing here needs a change. ${cap(near.join(' and '))} ${near.length>1?'are':'is'} a shade outside range, by less than the measure moves on an ordinary ${near.length>1?'reading':unitOf(nearKeys[0]).one} — the strip below will show that, but it is not worth acting on.</p>`
       : `<p>Everything is inside your baby's usual range. Nothing here needs a change.</p>`;
   } else {
     flags.sort((a,b)=>b.weight-a.weight);
     const f=flags[0];
+    const U=unitOf(f.k);
     const pct=k=>Math.round((cv[k]||0.2)*100);
     if(f.st.run<=1){
-      body=`<p><strong>Probably just one night.</strong> ${cap(f.label)} came in ${f.dir} range, after sitting inside it the night before. Single nights swing a lot at this age and rarely mean much alone. Worth a second look tomorrow rather than a change tonight.</p>`;
+      body=`<p><strong>Probably just one ${U.one}.</strong> ${cap(f.label)} came in ${f.dir} range, after sitting inside it ${U.prior}. A single ${U.one} swings a lot at this age and rarely means much alone. Worth a second look ${U.next} rather than a change ${U.now}.</p>`;
     } else if((cv[f.k]||0.2) > CV_CEILING){
-      body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). This measure moves ${pct(f.k)}% from night to night on its own, so a short run of it is weak evidence. Watch the steadier numbers before changing anything.</p>`;
+      body=`<p><strong>${f.st.run} ${U.many} running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} ${U.many} in a row (${f.st.outOf7} of the last ${f.st.of}). This measure moves ${pct(f.k)}% from one ${U.one} to the next on its own, so a short run of it is weak evidence. Watch the steadier numbers before changing anything.</p>`;
     } else {
-      body=`<p><strong>${f.st.run} nights running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} nights in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
+      body=`<p><strong>${f.st.run} ${U.many} running.</strong> ${cap(f.label)} has been ${f.dir} the usual range for ${f.st.run} ${U.many} in a row (${f.st.outOf7} of the last ${f.st.of}). That is long enough to be a pattern rather than noise — worth thinking about what changed around when it started: illness, teeth, a new routine, a different person doing naps, travel.</p>`;
     }
     if(flags.length>1){
       const watch=[...flags].sort((a,b)=>(cv[a.k]||1)-(cv[b.k]||1))[0];
       const rest=flags.slice(1).map(x=>x.label);
       const listed=rest.length===1?rest[0]:rest.slice(0,-1).join(', ')+' and '+rest[rest.length-1];
+      // Two metrics on different cadences cannot share one "night to night"
+      // phrase, so each carries its own.
+      const W=unitOf(watch.k);
       body += watch.k===f.k
-        ? `<p>Also outside range: ${listed}. ${cap(f.label)} still carries the most information of the group, moving ${pct(f.k)}% from one night to the next.</p>`
-        : `<p>Also outside range: ${listed}. Weigh ${watch.label} most heavily — it moves ${pct(watch.k)}% night to night against ${pct(f.k)}% for ${f.label}, so an equal shift there means more.</p>`;
+        ? `<p>Also outside range: ${listed}. ${cap(f.label)} still carries the most information of the group, moving ${pct(f.k)}% from one ${U.one} to the next.</p>`
+        : `<p>Also outside range: ${listed}. Weigh ${watch.label} most heavily — it moves ${pct(watch.k)}% from one ${W.one} to the next against ${pct(f.k)}% for ${f.label}, so an equal shift there means more.</p>`;
     }
   }
 
@@ -399,7 +414,7 @@ function guidance(last, hist, H, F, hm, cv, sizeOK){
   // a clean result.
   for(const k of Object.keys(REGIME)){
     if(regimeSeries(hist,k)) continue;
-    body+=`<p>${cap(LABELS[k]||k)} are not being judged tonight: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} nights (${regimeCount(hist,k)} so far). ${sizeOK?'Wet diaper volume below is standing in — it reads the size word in your notes, so it survives the change that the raw count does not.':'Writing Small, Medium or Large in the diaper note would let a size-weighted stand-in fill the gap.'}</p>`;
+    body+=`<p>${cap(LABELS[k]||k)} are not being judged ${unitOf(k).now}: ${REGIME_WHY[k]}. The old range does not apply and a new one needs ${MIN_REGIME_N} ${unitOf(k).many} (${regimeCount(hist,k)} so far). ${sizeOK?'Wet diaper volume below is standing in — it reads the size word in your notes, so it survives the change that the raw count does not.':'Writing Small, Medium or Large in the diaper note would let a size-weighted stand-in fill the gap.'}</p>`;
   }
 
   // the one escalation this data supports
