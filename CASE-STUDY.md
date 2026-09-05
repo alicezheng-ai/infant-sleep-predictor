@@ -1,6 +1,6 @@
 # Case study: one infant, weeks 5–12
 
-Findings from the project that produced this tool. A single infant, roughly 2,500 logged events across 84 days, analyzed in iterative passes with explicit forecasts and audits between them. The original passes covered weeks 5–10; weeks 11–12 were added later and are reported separately at the end, because they function as an out-of-sample check on everything above them.
+Findings from my baby that produced this tool. A single infant, roughly 2,500 logged events across 84 days, analyzed in iterative passes with explicit forecasts and audits between them. The original passes covered weeks 5–10; weeks 11–12 were added later and are reported separately at the end, because they function as an out-of-sample check on everything above them.
 
 Everything here is n=1. Identifying details have been removed. Read the numbers as an illustration of method, not as norms — the whole argument of this project is that population norms are the wrong comparison for an individual baby.
 
